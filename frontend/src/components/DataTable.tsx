@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   ChevronUpIcon,
   ChevronDownIcon,
@@ -7,59 +6,6 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
-
-interface Column {
-  header: string;
-  accessor: string;
-  render?: (value: any) => React.ReactNode;
-}
-
-interface DataTableProps {
-  columns: Column[];
-  data: any[];
-  loading?: boolean;
-}
-
-export const DataTable: React.FC<DataTableProps> = ({ columns, data, loading }) => {
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {columns.map((column, index) => (
-              <th
-                key={index}
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                {column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {columns.map((column, colIndex) => (
-                <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {column.render ? column.render(row[column.accessor]) : row[column.accessor]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
 
 interface Column<T> {
   key: keyof T;
@@ -76,13 +22,13 @@ interface DataTableProps<T> {
   pageSize?: number;
 }
 
-export default function DataTable<T>({
+const DataTable = <T,>({
   data,
   columns,
   onRowClick,
   isLoading = false,
   pageSize = 10,
-}: DataTableProps<T>) {
+}: DataTableProps<T>) => {
   const [sortConfig, setSortConfig] = useState<{
     key: keyof T;
     direction: 'asc' | 'desc';
@@ -264,4 +210,6 @@ export default function DataTable<T>({
       )}
     </div>
   );
-} 
+};
+
+export default DataTable; 
