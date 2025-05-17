@@ -10,9 +10,8 @@ import {
 
 const router = Router();
 
-// Protected routes
-// Temporarily disabled for testing
-// router.use(authenticate);
+// Apply authentication middleware to all inventory routes
+router.use(authenticate);
 
 // Get all products (all authenticated users)
 router.get('/', getProducts);

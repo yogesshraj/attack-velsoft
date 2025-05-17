@@ -14,7 +14,8 @@ datasource db {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  password      String
+  password      String?   // Made optional for Google auth
+  googleId      String?   @unique // Added for Google auth
   firstName     String
   lastName      String
   role          UserRole  @default(STAFF)

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import MainLayout from '@/layouts/MainLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -13,17 +14,42 @@ const Production = lazy(() => import('@/pages/Production'));
 const HR = lazy(() => import('@/pages/HR'));
 const CRM = lazy(() => import('@/pages/CRM'));
 const Settings = lazy(() => import('@/pages/Settings'));
+const Profile = lazy(() => import('@/pages/settings/Profile'));
 const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
 
-function App() {
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+function AppRoutes() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         {/* Auth routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         {/* Protected routes */}
-        <Route path="/" element={<MainLayout />}>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="inventory/*" element={<Inventory />} />
@@ -34,9 +60,18 @@ function App() {
           <Route path="hr/*" element={<HR />} />
           <Route path="crm/*" element={<CRM />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/profile" element={<Profile />} />
         </Route>
       </Routes>
     </Suspense>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
