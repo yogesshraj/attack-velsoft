@@ -1,0 +1,271 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User and Authentication
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String?   // Made optional for Google auth
+  googleId      String?   @unique // Added for Google auth
+  firstName     String
+  lastName      String
+  role          UserRole  @default(STAFF)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isActive      Boolean   @default(true)
+  department    String?
+  
+  // Relations
+  createdInvoices    Invoice[]    @relation("CreatedBy")
+  createdProducts    Product[]    @relation("CreatedProducts")
+  createdPurchases   Purchase[]   @relation("CreatedBy")
+  assignedTasks      Task[]       @relation("AssignedTo")
+  createdAccounts    Account[]    @relation("AccountCreatedBy")
+  createdTransactions Transaction[] @relation("TransactionCreatedBy")
+  createdFiscalYears FiscalYear[] @relation("FiscalYearCreatedBy")
+  createdTaxRates    TaxRate[]    @relation("TaxRateCreatedBy")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  ACCOUNTANT
+  HR
+  SALES
+}
+
+// Inventory Management
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  sku           String   @unique
+  category      String
+  unitPrice     Float
+  stockQuantity Int
+  reorderPoint  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdById   String
+  createdBy     User     @relation("CreatedProducts", fields: [createdById], references: [id])
+  invoiceItems  InvoiceItem[]
+  purchaseItems PurchaseItem[]
+
+  @@index([category])
+  @@index([sku])
+}
+
+// Billing & Invoicing
+model Invoice {
+  id              String    @id @default(uuid())
+  invoiceNumber   String    @unique
+  customerId      String
+  customerName    String
+  customerGstin   String?
+  totalAmount     Float
+  gstAmount       Float
+  status          InvoiceStatus
+  dueDate         DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  items           InvoiceItem[]
+  createdBy       User      @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById     String
+  transactions    Transaction[] @relation("InvoiceTransactions")
+}
+
+model InvoiceItem {
+  id          String    @id @default(uuid())
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  gstRate     Float
+  
+  // Relations
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id])
+  invoiceId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// Purchase Management
+model Purchase {
+  id              String    @id @default(uuid())
+  purchaseNumber  String    @unique
+  supplierId      String
+  supplierName    String
+  supplierGstin   String?
+  totalAmount     Float
+  status          PurchaseStatus
+  expectedDate    DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  items           PurchaseItem[]
+  createdBy       User      @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById     String
+  transactions    Transaction[] @relation("PurchaseTransactions")
+}
+
+model PurchaseItem {
+  id          String    @id @default(uuid())
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  
+  // Relations
+  purchase    Purchase  @relation(fields: [purchaseId], references: [id])
+  purchaseId  String
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+}
+
+enum PurchaseStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+// Task Management
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus
+  priority    Priority
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  assignedTo  User      @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Financial Records
+model Account {
+  id            String          @id @default(uuid())
+  code          String          @unique
+  name          String
+  type          AccountType
+  description   String?
+  balance       Float           @default(0)
+  parentAccount Account?        @relation("SubAccounts", fields: [parentId], references: [id])
+  parentId      String?
+  subAccounts   Account[]       @relation("SubAccounts")
+  transactions  Transaction[]   @relation("AccountTransactions")
+  journalEntries JournalEntry[] @relation("AccountJournalEntries")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdBy     User           @relation("AccountCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  date          DateTime
+  type          TransactionType
+  description   String
+  reference     String?
+  amount        Float
+  account       Account         @relation("AccountTransactions", fields: [accountId], references: [id])
+  accountId     String
+  invoice       Invoice?        @relation("InvoiceTransactions", fields: [invoiceId], references: [id])
+  invoiceId     String?
+  purchase      Purchase?       @relation("PurchaseTransactions", fields: [purchaseId], references: [id])
+  purchaseId    String?
+  entries       JournalEntry[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdBy     User           @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+}
+
+enum TransactionType {
+  INVOICE_PAYMENT
+  PURCHASE_PAYMENT
+  EXPENSE
+  INCOME
+  JOURNAL_ENTRY
+  BANK_TRANSFER
+}
+
+model JournalEntry {
+  id            String      @id @default(uuid())
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId String
+  account       Account     @relation("AccountJournalEntries", fields: [accountId], references: [id])
+  accountId     String
+  debit         Float      @default(0)
+  credit        Float      @default(0)
+  description   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model FiscalYear {
+  id            String      @id @default(uuid())
+  startDate     DateTime
+  endDate       DateTime
+  isClosed      Boolean     @default(false)
+  closedAt      DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     User        @relation("FiscalYearCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+}
+
+model TaxRate {
+  id            String      @id @default(uuid())
+  name          String
+  rate          Float
+  description   String?
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     User        @relation("TaxRateCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+} 
