@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export const createAccount = async (req: Request, res: Response) => {
   try {
     const { code, name, type, description, parentId } = req.body;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -91,6 +91,7 @@ export const getAccounts = async (req: Request, res: Response) => {
 export const getAccountById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = (req.user as any)?.id;
 
     const account = await prisma.account.findUnique({
       where: { id },
@@ -124,7 +125,7 @@ export const updateAccount = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -161,7 +162,7 @@ export const updateAccount = async (req: Request, res: Response) => {
 export const deleteAccount = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -208,6 +209,7 @@ export const getAccountBalance = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { startDate, endDate } = req.query;
+    const userId = (req.user as any)?.id;
 
     const account = await prisma.account.findUnique({
       where: { id },

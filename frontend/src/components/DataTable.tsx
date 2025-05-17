@@ -7,11 +7,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
-interface Column<T> {
-  key: keyof T;
+export interface Column<T> {
+  key: keyof T | string;
   header: string;
-  render?: (value: any, item: T) => React.ReactNode;
+  accessor: keyof T | string;
   sortable?: boolean;
+  render?: (value: any, item?: T) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -71,17 +72,17 @@ const DataTable = <T,>({
           <tr>
             {columns.map((column) => (
               <th
-                key={column.key as string}
+                key={column.key}
                 scope="col"
                 className={clsx(
                   'py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900',
                   column.sortable && 'cursor-pointer hover:bg-gray-100'
                 )}
-                onClick={() => column.sortable && handleSort(column.key)}
+                onClick={() => column.sortable && handleSort(column.accessor as keyof T)}
               >
                 <div className="flex items-center gap-2">
                   {column.header}
-                  {column.sortable && sortConfig?.key === column.key && (
+                  {column.sortable && sortConfig?.key === column.accessor && (
                     sortConfig.direction === 'asc' ? (
                       <ChevronUpIcon className="h-4 w-4" />
                     ) : (
@@ -122,16 +123,17 @@ const DataTable = <T,>({
                 )}
                 onClick={() => onRowClick?.(item)}
               >
-                {columns.map((column) => (
-                  <td
-                    key={column.key as string}
-                    className="whitespace-nowrap px-4 py-4 text-sm text-gray-500"
-                  >
-                    {column.render
-                      ? column.render(item[column.key], item)
-                      : item[column.key] as React.ReactNode}
-                  </td>
-                ))}
+                {columns.map((column) => {
+                  const value = item[column.accessor as keyof T];
+                  return (
+                    <td
+                      key={`${index}-${column.key}`}
+                      className="whitespace-nowrap px-4 py-4 text-sm text-gray-500"
+                    >
+                      {column.render ? column.render(value, item) : String(value)}
+                    </td>
+                  );
+                })}
               </tr>
             ))
           )}

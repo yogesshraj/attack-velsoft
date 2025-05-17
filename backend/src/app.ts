@@ -6,7 +6,7 @@ import compression from 'compression';
 import { rateLimit } from 'express-rate-limit';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
-import productRoutes from './routes/product.routes';
+import inventoryRoutes from './routes/inventory.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import purchaseRoutes from './routes/purchase.routes';
 import { errorHandler } from './middleware/error';
@@ -36,7 +36,7 @@ app.use(morgan('dev'));
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/inventory', inventoryRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/purchases', purchaseRoutes);
 

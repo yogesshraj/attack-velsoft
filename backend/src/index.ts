@@ -6,7 +6,8 @@ import { rateLimit } from 'express-rate-limit';
 import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import winston from 'winston';
-
+import inventoryRoutes from './routes/inventory.routes';
+import invoiceRoutes from './routes/invoice.routes';
 // Load environment variables
 config();
 
@@ -56,6 +57,10 @@ app.use(limiter);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// Mount API routes
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

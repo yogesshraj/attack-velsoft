@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const createInvoice = async (req: Request, res: Response) => {
   try {
     const { customerId, customerName, customerGstin, dueDate, items } = req.body;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });

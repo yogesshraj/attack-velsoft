@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DataTable } from '../../components/DataTable';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import DataTable from '../../components/DataTable';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { format } from 'date-fns';
 import { InvoiceStatus } from '../../types/invoice';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../utils/api';
 
 interface Invoice {
   id: string;
@@ -30,17 +31,13 @@ const InvoiceList: React.FC = () => {
   const { data: invoices, isLoading, error } = useQuery<Invoice[]>({
     queryKey: ['invoices', searchTerm, statusFilter, startDate, endDate],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'ALL') params.append('status', statusFilter);
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      const params: Record<string, string> = {};
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter !== 'ALL') params.status = statusFilter;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
 
-      const response = await fetch(`/api/invoices?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch invoices');
-      }
-      return response.json();
+      return api.get('/api/invoices', { params });
     },
   });
 
@@ -49,47 +46,54 @@ const InvoiceList: React.FC = () => {
 
   const columns = [
     {
+      key: 'invoiceNumber',
       header: 'Invoice Number',
       accessor: 'invoiceNumber',
       sortable: true,
     },
     {
+      key: 'customerName',
       header: 'Customer',
       accessor: 'customerName',
       sortable: true,
     },
     {
+      key: 'totalAmount',
       header: 'Amount',
       accessor: 'totalAmount',
       sortable: true,
-      cell: (value: number) => `₹${value.toFixed(2)}`,
+      render: (value: number) => `₹${value.toFixed(2)}`,
     },
     {
+      key: 'status',
       header: 'Status',
       accessor: 'status',
       sortable: true,
-      cell: (value: InvoiceStatus) => (
+      render: (value: InvoiceStatus) => (
         <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(value)}`}>
           {value}
         </span>
       ),
     },
     {
+      key: 'dueDate',
       header: 'Due Date',
       accessor: 'dueDate',
       sortable: true,
-      cell: (value: string) => format(new Date(value), 'dd/MM/yyyy'),
+      render: (value: string) => format(new Date(value), 'dd/MM/yyyy'),
     },
     {
+      key: 'createdBy',
       header: 'Created By',
       accessor: 'createdBy',
-      cell: (value: Invoice['createdBy']) => `${value.firstName} ${value.lastName}`,
+      render: (value: Invoice['createdBy']) => `${value.firstName} ${value.lastName}`,
     },
     {
+      key: 'createdAt',
       header: 'Created At',
       accessor: 'createdAt',
       sortable: true,
-      cell: (value: string) => format(new Date(value), 'dd/MM/yyyy'),
+      render: (value: string) => format(new Date(value), 'dd/MM/yyyy'),
     },
   ];
 

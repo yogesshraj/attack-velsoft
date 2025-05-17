@@ -4,7 +4,7 @@ import { Formik, Form, Field, FieldArray } from 'formik';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { Invoice, InvoiceItem, CreateInvoiceDTO } from '../../types/invoice';
 
 interface Product {

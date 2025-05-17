@@ -17,7 +17,7 @@ export const createTransaction = async (req: Request, res: Response) => {
       entries,
     } = req.body;
 
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -183,7 +183,7 @@ export const getTransactionById = async (req: Request, res: Response) => {
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
